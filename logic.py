@@ -4,11 +4,17 @@ Shared by the Kivy UI and the notification service.
 """
 
 import os
+import json
 import sqlite3
 import calendar
 from datetime import date, timedelta
 
 FREQUENCIES = ["monthly", "quarterly", "yearly", "custom"]
+
+CATEGORIES = [
+    "Entertainment", "Essentials", "Productivity", "Quality of Life",
+    "Streaming", "Random", "Other",
+]
 
 # Global primary currency choices.
 PRIMARY_CURRENCIES = [
@@ -76,9 +82,17 @@ def init_db():
                 value TEXT
             )"""
         )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS card_aliases (
+                card  TEXT PRIMARY KEY,
+                alias TEXT
+            )"""
+        )
         cols = [r[1] for r in conn.execute("PRAGMA table_info(subscriptions)")]
         if "card" not in cols:
             conn.execute("ALTER TABLE subscriptions ADD COLUMN card TEXT")
+        if "category" not in cols:
+            conn.execute("ALTER TABLE subscriptions ADD COLUMN category TEXT")
 
 
 # ---- Settings (key/value) -------------------------------------------------
@@ -109,16 +123,19 @@ def set_primary_currency(value):
 
 # ---- Subscriptions --------------------------------------------------------
 def add_subscription(name, amount, sec_amount, sec_currency,
-                     frequency, start_date, interval_days, card):
+                     frequency, start_date, interval_days, card,
+                     category=None):
     with get_conn() as conn:
-        conn.execute(
+        cur = conn.execute(
             """INSERT INTO subscriptions
                (name, price_usd, secondary_amount, secondary_currency,
-                frequency, start_date, interval_days, card)
-               VALUES (?,?,?,?,?,?,?,?)""",
+                frequency, start_date, interval_days, card, category)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
             (name, amount, sec_amount, sec_currency,
-             frequency, start_date.isoformat(), interval_days, card),
+             frequency, start_date.isoformat(), interval_days, card,
+             category),
         )
+        return cur.lastrowid
 
 
 def get_all_subscriptions():
@@ -141,16 +158,18 @@ def get_subscription(sub_id):
 
 
 def update_subscription(sub_id, name, amount, sec_amount, sec_currency,
-                        frequency, start_date, interval_days, card):
+                        frequency, start_date, interval_days, card,
+                        category=None):
     with get_conn() as conn:
         conn.execute(
             """UPDATE subscriptions
                SET name=?, price_usd=?, secondary_amount=?,
                    secondary_currency=?, frequency=?, start_date=?,
-                   interval_days=?, card=?
+                   interval_days=?, card=?, category=?
                WHERE id=?""",
             (name, amount, sec_amount, sec_currency,
-             frequency, start_date.isoformat(), interval_days, card, sub_id),
+             frequency, start_date.isoformat(), interval_days, card,
+             category, sub_id),
         )
 
 
@@ -161,6 +180,121 @@ def get_distinct_cards():
             "WHERE card IS NOT NULL AND card != '' ORDER BY card"
         ).fetchall()
         return [r["card"] for r in rows]
+
+
+def get_card_alias(card):
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT alias FROM card_aliases WHERE card = ?", (card,)
+        ).fetchone()
+        return row["alias"] if row else None
+
+
+def set_card_alias(card, alias):
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO card_aliases (card, alias) VALUES (?, ?) "
+            "ON CONFLICT(card) DO UPDATE SET alias = excluded.alias",
+            (card, alias),
+        )
+
+
+def delete_all_subscriptions():
+    with get_conn() as conn:
+        conn.execute("DELETE FROM subscriptions")
+
+
+# ---- Analytics --------------------------------------------------------
+def get_card_totals():
+    """[(card_label, annual_cost_total), ...] sorted by total desc."""
+    totals = {}
+    for s in get_all_subscriptions():
+        label = s["card"] or "No card"
+        totals[label] = totals.get(label, 0) + annual_cost(s)
+    return sorted(totals.items(), key=lambda kv: -kv[1])
+
+
+def get_card_groups():
+    """[(card_label, [subscription rows]), ...], each group's rows sorted
+    by name, groups sorted by group annual total desc."""
+    groups = {}
+    for s in get_all_subscriptions():
+        label = s["card"] or "No card"
+        groups.setdefault(label, []).append(s)
+    return sorted(
+        groups.items(),
+        key=lambda kv: -sum(annual_cost(s) for s in kv[1]),
+    )
+
+
+def get_category_totals():
+    """[(category_label, annual_cost_total), ...] sorted by total desc."""
+    totals = {}
+    for s in get_all_subscriptions():
+        label = s["category"] or "Other"
+        totals[label] = totals.get(label, 0) + annual_cost(s)
+    return sorted(totals.items(), key=lambda kv: -kv[1])
+
+
+# ---- Import / Export ---------------------------------------------------
+def export_data():
+    """Return a JSON-serialisable dict of everything the app stores."""
+    subs = []
+    for s in get_all_subscriptions():
+        subs.append({
+            "name": s["name"],
+            "price_usd": s["price_usd"],
+            "secondary_amount": s["secondary_amount"],
+            "secondary_currency": s["secondary_currency"],
+            "frequency": s["frequency"],
+            "start_date": s["start_date"],
+            "interval_days": s["interval_days"],
+            "card": s["card"],
+            "category": s["category"],
+        })
+    return {
+        "version": 1,
+        "primary_currency": get_primary_currency(),
+        "subscriptions": subs,
+    }
+
+
+def export_to_json_string():
+    return json.dumps(export_data(), indent=2, ensure_ascii=False)
+
+
+def export_to_file(path):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(export_to_json_string())
+    return path
+
+
+def import_data(data, replace=False):
+    """Load subscriptions (and primary currency) from a parsed export dict.
+    replace=True wipes existing subscriptions first (a clean restore);
+    replace=False appends the imported rows to what's already there."""
+    if replace:
+        delete_all_subscriptions()
+    for s in data.get("subscriptions", []):
+        add_subscription(
+            s["name"], s["price_usd"], s.get("secondary_amount"),
+            s.get("secondary_currency"), s["frequency"],
+            date.fromisoformat(s["start_date"]), s.get("interval_days"),
+            s.get("card"), s.get("category"),
+        )
+    cur = data.get("primary_currency")
+    if cur:
+        set_primary_currency(cur)
+
+
+def import_from_json_string(text, replace=False):
+    import_data(json.loads(text), replace=replace)
+
+
+def import_from_file(path, replace=False):
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    import_data(data, replace=replace)
 
 
 # --------------------------------------------------------------------------

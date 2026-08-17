@@ -2,10 +2,10 @@
 
 title = Subscription Tracker
 package.name = subscriptiontracker
-package.domain = org.example
+package.domain = com.georgearn
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-version = 0.2
+version = 1.8
 
 # Kivy + pyjnius (pyjnius is bundled automatically on android)
 requirements = python3,kivy
@@ -30,17 +30,21 @@ android.presplash_color = #000000
 # ---------- Android-specific ----------
 
 # Background notification service (foreground so Android doesn't kill it)
-services = Notify:servicenotify.py:foreground
+services = Notify:servicenotify.py:foreground:foregroundServiceType=dataSync
 
 # Permissions
-android.permissions = POST_NOTIFICATIONS, FOREGROUND_SERVICE, RECEIVE_BOOT_COMPLETED, WAKE_LOCK
+android.permissions = POST_NOTIFICATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, RECEIVE_BOOT_COMPLETED, WAKE_LOCK
 
-android.api = 36
+android.api = 35
 android.minapi = 29
 android.archs = arm64-v8a
 android.allow_backup = True
 android.accept_sdk_license = True
-android.skip_update = False
+
+# FileProvider, so the app can share the generated .ics file with the
+# calendar app via a content:// URI (needed for android_calendar.py).
+android.res_xml = res/file_paths.xml
+android.gradle_dependencies = androidx.core:core:1.13.1
 
 
 [buildozer]

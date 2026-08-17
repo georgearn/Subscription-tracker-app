@@ -1,8 +1,8 @@
 """
 Background notification service for the Subscription Tracker.
 
-Buildozer runs this as an Android foreground service.  It wakes every
-30 minutes, checks the subscription database, and posts notifications:
+Woken periodically (see main() below), checks the subscription database,
+and posts notifications:
 
  * 1st of each month  → monthly summary (all payments + total for the month)
  * Every payment day   → daily reminder (subscriptions due today)
@@ -14,7 +14,6 @@ records which (date, type) combos have already been sent.
 import os
 import sys
 import json
-import time
 import calendar
 from datetime import date, datetime
 
@@ -159,9 +158,16 @@ def _daily_body(today):
 
 
 # --------------------------------------------------------------------------
-# Main service loop
+# Main service entrypoint
 # --------------------------------------------------------------------------
-CHECK_INTERVAL = 30 * 60      # seconds between checks (30 min)
+# Woken periodically by an AlarmManager alarm (scheduled from main.py) and
+# once immediately at app launch. Does a single check pass, posts any due
+# reminder notifications, then drops its own mandatory foreground-service
+# notification and stops - so nothing sits pinned in the notification shade
+# between checks. (Android requires a foreground service to show *some*
+# notification while it's alive; stopForeground() removes it once the
+# service is done, and doesn't touch the separate reminder notifications
+# posted above via notify(), which use their own notification IDs.)
 MONTHLY_NOTIF_ID = 9001
 DAILY_NOTIF_ID = 9002
 
@@ -176,35 +182,38 @@ def main():
     logic.set_db_path(db_path)
     logic.init_db()
 
-    while True:
-        try:
-            today = date.today()
+    try:
+        today = date.today()
 
-            # --- monthly summary on the 1st --------------------------------
-            if today.day == 1:
-                key = f"{today.isoformat()}:monthly"
-                if not _already_sent(context, key):
-                    body = _monthly_body(today)
-                    if body:
-                        notify(context,
-                               f"📋 {calendar.month_name[today.month]} "
-                               f"subscriptions",
-                               body, MONTHLY_NOTIF_ID)
-                    _mark_sent(context, key)
-
-            # --- daily payment reminder ------------------------------------
-            key = f"{today.isoformat()}:daily"
+        # --- monthly summary on the 1st -------------------------------
+        if today.day == 1:
+            key = f"{today.isoformat()}:monthly"
             if not _already_sent(context, key):
-                body = _daily_body(today)
+                body = _monthly_body(today)
                 if body:
-                    notify(context, "💳 Payments due today",
-                           body, DAILY_NOTIF_ID)
+                    notify(context,
+                           f"📋 {calendar.month_name[today.month]} "
+                           f"subscriptions",
+                           body, MONTHLY_NOTIF_ID)
                 _mark_sent(context, key)
 
-        except Exception as e:
-            print(f"[SubTracker service] error: {e}")
+        # --- daily payment reminder -------------------------------------
+        key = f"{today.isoformat()}:daily"
+        if not _already_sent(context, key):
+            body = _daily_body(today)
+            if body:
+                notify(context, "💳 Payments due today",
+                       body, DAILY_NOTIF_ID)
+            _mark_sent(context, key)
 
-        time.sleep(CHECK_INTERVAL)
+    except Exception as e:
+        print(f"[SubTracker service] error: {e}")
+
+    try:
+        context.stopForeground(True)
+        context.stopSelf()
+    except Exception as e:
+        print(f"[SubTracker service] could not stop: {e}")
 
 
 if __name__ == "__main__":
