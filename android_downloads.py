@@ -49,6 +49,7 @@ _PICK_REQUEST_CODE = 0x4201
 
 
 def pick_file(callback, mime_type="*/*"):
+    from kivy.clock import Clock
     """Launch the system file picker (Storage Access Framework) so the
     user can pick any file from anywhere they have access to — not just
     files this app wrote — with no storage permission needed. Calls
@@ -63,19 +64,27 @@ def pick_file(callback, mime_type="*/*"):
     intent.setType(mime_type)
 
     def on_result(request_code, result_code, data):
+        # Runs on Android's activity-result thread, NOT the Kivy/GL
+        # thread. callback() eventually builds Kivy widgets (Popup etc),
+        # which must happen on the main thread -- so do the URI reading
+        # here (that part is fine off-thread) but hop back via
+        # Clock.schedule_once before calling callback().
         if request_code != _PICK_REQUEST_CODE:
             return
-        activity.unbind(on_activity_result=on_result)
-        Activity = autoclass("android.app.Activity")
-        if result_code != Activity.RESULT_OK or data is None:
-            callback(None, None)
-            return
-        uri = data.getData()
         try:
-            callback(_read_uri(uri), _query_display_name(uri))
+            activity.unbind(on_activity_result=on_result)
+            Activity = autoclass("android.app.Activity")
+            if result_code != Activity.RESULT_OK or data is None:
+                Clock.schedule_once(lambda dt: callback(None, None))
+                return
+            uri = data.getData()
+            text = _read_uri(uri)
+            name = _query_display_name(uri)
+            Clock.schedule_once(lambda dt: callback(text, name))
         except Exception as e:
             print(f"[SubTracker] Could not read picked file: {e}")
-            callback(None, None)
+            Clock.schedule_once(
+                lambda dt, err=str(e): callback(None, None, error=err))
 
     activity.bind(on_activity_result=on_result)
     mActivity.startActivityForResult(intent, _PICK_REQUEST_CODE)

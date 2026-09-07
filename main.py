@@ -742,8 +742,12 @@ class SubscriptionApp(App):
             return
         self._on_file_picked(text, os.path.basename(path))
 
-    def _on_file_picked(self, text, fname):
+    def _on_file_picked(self, text, fname, error=None):
         if text is None:
+            if error:
+                Popup(title="Import failed",
+                      content=make_label(str(error), halign="center"),
+                      size_hint=(0.85, 0.3)).open()
             return
         self._confirm_import_text(text, fname or "selected file")
 

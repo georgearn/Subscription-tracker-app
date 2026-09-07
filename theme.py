@@ -26,6 +26,39 @@ BLUE = (0.20, 0.45, 0.70, 1)
 RED = (0.74, 0.25, 0.25, 1)
 NEUTRAL = (0.24, 0.24, 0.29, 1)
 WHITE = (0.95, 0.95, 0.95, 1)
+def _monet_accent():
+    """System Material You (Monet) accent colour on Android 12+ (API 31+),
+    else None — desktop and older Android fall through to the fixed
+    violet/pink BRAND above."""
+    try:
+        from kivy.utils import platform
+        if platform != "android":
+            return None
+        from jnius import autoclass
+        Build_VERSION = autoclass("android.os.Build$VERSION")
+        if Build_VERSION.SDK_INT < 31:
+            return None
+        activity = autoclass("org.kivy.android.PythonActivity").mActivity
+        resources = activity.getResources()
+        res_id = resources.getIdentifier(
+            "system_accent1_500", "color", "android")
+        if res_id == 0:
+            return None
+        color_int = activity.getColor(res_id) & 0xFFFFFFFF
+        r = ((color_int >> 16) & 0xFF) / 255.0
+        g = ((color_int >> 8) & 0xFF) / 255.0
+        b = (color_int & 0xFF) / 255.0
+        return (r, g, b, 1)
+    except Exception as e:
+        print(f"[SubTracker] Monet accent unavailable, using BRAND: {e}")
+        return None
+
+
+_monet = _monet_accent()
+if _monet:
+    BRAND = _monet
+    BRAND_DARK = (BRAND[0] * 0.68, BRAND[1] * 0.68, BRAND[2] * 0.68, 1)
+
 TAB_ACTIVE = BRAND
 TAB_INACTIVE = (0.09, 0.09, 0.12, 1)
 TAB_TEXT_ACTIVE = (1, 1, 1, 1)

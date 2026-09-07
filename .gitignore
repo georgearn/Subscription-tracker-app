@@ -1,28 +1,11 @@
-# Buildozer / python-for-android build output
+///
+
+# Buildozer / python-for-android build cache (SDK, NDK, gradle dists, compiled objects)
 .buildozer/
 
-# Python bytecode
+# Python bytecode cache
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 
-# Virtual environments
+# Local virtualenv
 .venv/
-venv/
-env/
-
-# Packaging / build artifacts
-build/
-dist/
-*.egg-info/
-
-# Editor / OS cruft
-.vscode/
-.idea/
-*.swp
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
