@@ -14,14 +14,10 @@ orientation = portrait
 fullscreen = 0
 
 # ---------- Icons ----------
-# Legacy launcher icon (pre-Android 8) and a fallback
-icon.filename = %(source.dir)s/data/icon.png
-# Adaptive icon layers (Android 8 / API 26+)
+# Adaptive icon layers (Android 8 / API 26+; minapi is 29, so legacy
+# icon.filename and the API 33+ monochrome layer are not needed)
 icon.adaptive_foreground.filename = %(source.dir)s/data/icon_foreground.png
 icon.adaptive_background.filename = %(source.dir)s/data/icon_background.png
-# Themed (monochrome) icon for Android 13+ — remove if your buildozer
-# version does not recognise this key.
-icon.adaptive_monochrome.filename = %(source.dir)s/data/icon_monochrome.png
 
 # Loading screen shown while the app starts (replaces buildozer's default)
 presplash.filename = %(source.dir)s/data/presplash.jpg
@@ -35,9 +31,10 @@ services = Notify:servicenotify.py:foreground:foregroundServiceType=dataSync
 # Permissions
 android.permissions = POST_NOTIFICATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_DATA_SYNC, RECEIVE_BOOT_COMPLETED, WAKE_LOCK
 
-android.api = 35
+android.api = 37
 android.minapi = 29
 android.archs = arm64-v8a
+android.release_artifact = apk
 android.allow_backup = True
 android.accept_sdk_license = True
 
