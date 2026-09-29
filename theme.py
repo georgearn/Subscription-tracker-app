@@ -13,7 +13,6 @@ BTN_H = dp(54)
 INPUT_H = dp(46)
 PADX = dp(10)
 NAV_BTN_W = dp(56)
-ICON_BTN_W = dp(50)
 
 # ---- Colours ------------------------------------------------------------
 # Brand accent — a vivid purple/indigo, Trackizer-style, used for the tab

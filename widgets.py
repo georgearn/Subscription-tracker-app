@@ -55,26 +55,6 @@ class FloatingActionButton(Button):
             Line(points=[cx, cy - r, cx, cy + r], width=lw, cap="round")
 
 
-class ColorSwatch(Widget):
-    """Small rounded square used as a legend marker. Superseded by icons
-    everywhere it used to appear, but kept around unused rather than
-    deleted during a pure reorganisation."""
-
-    def __init__(self, color=(1, 1, 1, 1), **kwargs):
-        kwargs.setdefault("size_hint", (None, None))
-        kwargs.setdefault("size", (dp(16), dp(16)))
-        super().__init__(**kwargs)
-        with self.canvas:
-            Color(*color)
-            self._rect = RoundedRectangle(radius=[dp(3)])
-        self.bind(pos=self._sync, size=self._sync)
-        self._sync()
-
-    def _sync(self, *_):
-        self._rect.pos = self.pos
-        self._rect.size = self.size
-
-
 class RowCard(BoxLayout):
     """Rounded-corner row background, the same visual language as the
     subscription cards, reused for list rows on the Overview/Analytics

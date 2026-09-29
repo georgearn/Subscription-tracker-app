@@ -64,7 +64,7 @@ def _system_insets():
     if not _is_android():
         return 0, 0
     try:
-        from jnius import autoclass, cast
+        from jnius import autoclass
         PythonActivity = autoclass("org.kivy.android.PythonActivity")
         activity = PythonActivity.mActivity
         decor_view = activity.getWindow().getDecorView()
@@ -910,22 +910,6 @@ class SubscriptionApp(App):
         self.selected_day = None if day_num == self.selected_day else day_num
         self.refresh_month()
 
-    def _month_prev(self):
-        if self.view_month == 1:
-            self.view_month, self.view_year = 12, self.view_year - 1
-        else:
-            self.view_month -= 1
-        self.selected_day = None
-        self.refresh_month()
-
-    def _month_next(self):
-        if self.view_month == 12:
-            self.view_month, self.view_year = 1, self.view_year + 1
-        else:
-            self.view_month += 1
-        self.selected_day = None
-        self.refresh_month()
-
     def _month_pick(self):
         pick_year = [self.view_year]
         content = BoxLayout(orientation="vertical", spacing=dp(6),
@@ -1117,7 +1101,7 @@ class SubscriptionApp(App):
             size_hint_x=None, width=dp(110)))
         dot = Widget(size_hint=(None, None), size=(dp(6), dp(6)))
         with dot.canvas:
-            dot_color = Color(*RED)
+            Color(*RED)
             dot_ellipse = Ellipse(pos=dot.pos, size=dot.size)
 
         def _sync_dot(*_):
