@@ -296,39 +296,6 @@ class MonthSubCard(BoxLayout):
         self._bg.size = self.size
 
 
-class PieChart(Widget):
-    """Simple pie chart drawn with Ellipse angle slices, no dependencies.
-    Superseded by ArcGauge in the category panel, but kept around unused
-    rather than deleted during a pure reorganisation."""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.data = []  # [(label, value, color), ...]
-        self.bind(pos=self._redraw, size=self._redraw)
-
-    def set_data(self, data):
-        self.data = data
-        self._redraw()
-
-    def _redraw(self, *_):
-        self.canvas.clear()
-        total = sum(v for _, v, _ in self.data)
-        if total <= 0:
-            return
-        x, y = self.pos
-        w, h = self.size
-        d = min(w, h) * 0.86
-        cx, cy = x + w / 2, y + h / 2
-        with self.canvas:
-            start = 0.0
-            for _label, value, color in self.data:
-                end = start + (value / total) * 360.0
-                Color(*color)
-                Ellipse(pos=(cx - d / 2, cy - d / 2), size=(d, d),
-                       angle_start=start, angle_end=end)
-                start = end
-
-
 class ArcGauge(Widget):
     """Half-circle ring split into coloured arcs, one per category, sized
     by that category's share of total spend — the reference's budget gauge

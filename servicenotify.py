@@ -15,7 +15,7 @@ import os
 import sys
 import json
 import calendar
-from datetime import date, datetime
+from datetime import date
 
 # Ensure the project root is importable so `import logic` works.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -42,7 +42,6 @@ def _ensure_channel(context):
         return
     from jnius import autoclass
     NotificationChannel = autoclass("android.app.NotificationChannel")
-    NotificationManager = autoclass("android.app.NotificationManager")
     importance = 3  # IMPORTANCE_DEFAULT
     channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance)
     channel.setDescription("Subscription payment reminders")

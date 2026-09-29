@@ -26,7 +26,6 @@ SVG = os.path.join(HERE, "icon_source.svg")
 SIZE = 432                      # adaptive layer size (108dp @ xxxhdpi)
 # Adaptive icon geometry: the 108dp layer is cropped to a 72dp visible
 # area, and only the central 66dp circle is guaranteed unclipped.
-VISIBLE_D = SIZE * 72 / 108     # 288 px
 SAFE_D = SIZE * 66 / 108        # 264 px
 BG = (16, 28, 49)               # #101c31
 

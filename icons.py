@@ -62,116 +62,115 @@ def draw_icon_shape(icon, cx, cy, r, lw):
     radius r and line width lw. Must be called inside a canvas context
     that already has its Color set. Shared by IconButton and the tab bar
     icons so there's one vocabulary of glyphs across the app."""
-    if True:
-        if icon == "left":
-            Line(points=[cx + r * 0.4, cy - r * 0.75, cx - r * 0.4, cy,
-                         cx + r * 0.4, cy + r * 0.75],
-                 width=lw, cap="round", joint="round")
-        elif icon == "right":
-            Line(points=[cx - r * 0.4, cy - r * 0.75, cx + r * 0.4, cy,
-                         cx - r * 0.4, cy + r * 0.75],
-                 width=lw, cap="round", joint="round")
-        elif icon == "plus":
-            Line(points=[cx - r * 0.8, cy, cx + r * 0.8, cy],
+    if icon == "left":
+        Line(points=[cx + r * 0.4, cy - r * 0.75, cx - r * 0.4, cy,
+                     cx + r * 0.4, cy + r * 0.75],
+             width=lw, cap="round", joint="round")
+    elif icon == "right":
+        Line(points=[cx - r * 0.4, cy - r * 0.75, cx + r * 0.4, cy,
+                     cx - r * 0.4, cy + r * 0.75],
+             width=lw, cap="round", joint="round")
+    elif icon == "plus":
+        Line(points=[cx - r * 0.8, cy, cx + r * 0.8, cy],
+             width=lw, cap="round")
+        Line(points=[cx, cy - r * 0.8, cx, cy + r * 0.8],
+             width=lw, cap="round")
+    elif icon == "calendar":
+        Line(rectangle=(cx - r * 0.85, cy - r * 0.85,
+                        r * 1.7, r * 1.55), width=lw)
+        Line(points=[cx - r * 0.85, cy + r * 0.35,
+                     cx + r * 0.85, cy + r * 0.35], width=lw)
+        Line(points=[cx - r * 0.45, cy + r * 0.5,
+                     cx - r * 0.45, cy + r * 0.95],
+             width=lw, cap="round")
+        Line(points=[cx + r * 0.45, cy + r * 0.5,
+                     cx + r * 0.45, cy + r * 0.95],
+             width=lw, cap="round")
+    elif icon == "pencil":
+        inv = 1 / math.sqrt(2)
+        dx, dy = inv, inv          # axis toward the eraser (up-right)
+        px, py = -inv, inv         # perpendicular (pencil width)
+        hw = r * 0.30
+        tip = (cx - dx * r * 0.95, cy - dy * r * 0.95)
+        nb = (cx - dx * r * 0.45, cy - dy * r * 0.45)   # nib base
+        er = (cx + dx * r * 0.90, cy + dy * r * 0.90)   # eraser end
+        nb_l = (nb[0] + px * hw, nb[1] + py * hw)
+        nb_r = (nb[0] - px * hw, nb[1] - py * hw)
+        er_l = (er[0] + px * hw, er[1] + py * hw)
+        er_r = (er[0] - px * hw, er[1] - py * hw)
+        # body outline (closed)
+        Line(points=[tip[0], tip[1], nb_l[0], nb_l[1],
+                     er_l[0], er_l[1], er_r[0], er_r[1],
+                     nb_r[0], nb_r[1], tip[0], tip[1]],
+             width=lw, joint="round", cap="round")
+        # line where the wood meets the painted body
+        Line(points=[nb_l[0], nb_l[1], nb_r[0], nb_r[1]],
+             width=lw, cap="round")
+        # eraser band
+        eb = (cx + dx * r * 0.55, cy + dy * r * 0.55)
+        Line(points=[eb[0] + px * hw, eb[1] + py * hw,
+                     eb[0] - px * hw, eb[1] - py * hw],
+             width=lw, cap="round")
+    elif icon == "trash":
+        Line(points=[cx - r * 0.7, cy + r * 0.55,
+                     cx + r * 0.7, cy + r * 0.55],
+             width=lw, cap="round")
+        Line(points=[cx - r * 0.28, cy + r * 0.55,
+                     cx - r * 0.28, cy + r * 0.8,
+                     cx + r * 0.28, cy + r * 0.8,
+                     cx + r * 0.28, cy + r * 0.55],
+             width=lw, cap="round", joint="round")
+        Line(points=[cx - r * 0.55, cy + r * 0.55,
+                     cx - r * 0.42, cy - r * 0.8,
+                     cx + r * 0.42, cy - r * 0.8,
+                     cx + r * 0.55, cy + r * 0.55],
+             width=lw, cap="round", joint="round")
+        Line(points=[cx, cy + r * 0.35, cx, cy - r * 0.55],
+             width=lw * 0.8, cap="round")
+    elif icon == "swap":
+        # two opposing arrows: import/export at a glance. Drawn thinner
+        # and more compact than the other icons, which read fine bolder
+        # but two adjacent thick arrowheads here just looked cluttered.
+        thin = lw * 0.6
+        rr = r * 0.8
+        off = rr * 0.45
+        Line(points=[cx - off, cy - rr * 0.55, cx - off, cy + rr * 0.5],
+             width=thin, cap="round")
+        Line(points=[cx - off - rr * 0.28, cy + rr * 0.1,
+                     cx - off, cy + rr * 0.5,
+                     cx - off + rr * 0.28, cy + rr * 0.1],
+             width=thin, cap="round", joint="round")
+        Line(points=[cx + off, cy + rr * 0.55, cx + off, cy - rr * 0.5],
+             width=thin, cap="round")
+        Line(points=[cx + off - rr * 0.28, cy - rr * 0.1,
+                     cx + off, cy - rr * 0.5,
+                     cx + off + rr * 0.28, cy - rr * 0.1],
+             width=thin, cap="round", joint="round")
+    elif icon == "list":
+        # bulleted rows read more like a proper list glyph than bare
+        # lines, and echo the app's own row-avatar dots
+        dot_r = lw * 0.55
+        for dy in (0.62, 0.0, -0.62):
+            Ellipse(pos=(cx - r * 0.85 - dot_r, cy + dy * r - dot_r),
+                    size=(dot_r * 2, dot_r * 2))
+            Line(points=[cx - r * 0.5, cy + dy * r,
+                         cx + r * 0.85, cy + dy * r],
                  width=lw, cap="round")
-            Line(points=[cx, cy - r * 0.8, cx, cy + r * 0.8],
-                 width=lw, cap="round")
-        elif icon == "calendar":
-            Line(rectangle=(cx - r * 0.85, cy - r * 0.85,
-                            r * 1.7, r * 1.55), width=lw)
-            Line(points=[cx - r * 0.85, cy + r * 0.35,
-                         cx + r * 0.85, cy + r * 0.35], width=lw)
-            Line(points=[cx - r * 0.45, cy + r * 0.5,
-                         cx - r * 0.45, cy + r * 0.95],
-                 width=lw, cap="round")
-            Line(points=[cx + r * 0.45, cy + r * 0.5,
-                         cx + r * 0.45, cy + r * 0.95],
-                 width=lw, cap="round")
-        elif icon == "pencil":
-            inv = 1 / math.sqrt(2)
-            dx, dy = inv, inv          # axis toward the eraser (up-right)
-            px, py = -inv, inv         # perpendicular (pencil width)
-            hw = r * 0.30
-            tip = (cx - dx * r * 0.95, cy - dy * r * 0.95)
-            nb = (cx - dx * r * 0.45, cy - dy * r * 0.45)   # nib base
-            er = (cx + dx * r * 0.90, cy + dy * r * 0.90)   # eraser end
-            nb_l = (nb[0] + px * hw, nb[1] + py * hw)
-            nb_r = (nb[0] - px * hw, nb[1] - py * hw)
-            er_l = (er[0] + px * hw, er[1] + py * hw)
-            er_r = (er[0] - px * hw, er[1] - py * hw)
-            # body outline (closed)
-            Line(points=[tip[0], tip[1], nb_l[0], nb_l[1],
-                         er_l[0], er_l[1], er_r[0], er_r[1],
-                         nb_r[0], nb_r[1], tip[0], tip[1]],
-                 width=lw, joint="round", cap="round")
-            # line where the wood meets the painted body
-            Line(points=[nb_l[0], nb_l[1], nb_r[0], nb_r[1]],
-                 width=lw, cap="round")
-            # eraser band
-            eb = (cx + dx * r * 0.55, cy + dy * r * 0.55)
-            Line(points=[eb[0] + px * hw, eb[1] + py * hw,
-                         eb[0] - px * hw, eb[1] - py * hw],
-                 width=lw, cap="round")
-        elif icon == "trash":
-            Line(points=[cx - r * 0.7, cy + r * 0.55,
-                         cx + r * 0.7, cy + r * 0.55],
-                 width=lw, cap="round")
-            Line(points=[cx - r * 0.28, cy + r * 0.55,
-                         cx - r * 0.28, cy + r * 0.8,
-                         cx + r * 0.28, cy + r * 0.8,
-                         cx + r * 0.28, cy + r * 0.55],
-                 width=lw, cap="round", joint="round")
-            Line(points=[cx - r * 0.55, cy + r * 0.55,
-                         cx - r * 0.42, cy - r * 0.8,
-                         cx + r * 0.42, cy - r * 0.8,
-                         cx + r * 0.55, cy + r * 0.55],
-                 width=lw, cap="round", joint="round")
-            Line(points=[cx, cy + r * 0.35, cx, cy - r * 0.55],
-                 width=lw * 0.8, cap="round")
-        elif icon == "swap":
-            # two opposing arrows: import/export at a glance. Drawn thinner
-            # and more compact than the other icons, which read fine bolder
-            # but two adjacent thick arrowheads here just looked cluttered.
-            thin = lw * 0.6
-            rr = r * 0.8
-            off = rr * 0.45
-            Line(points=[cx - off, cy - rr * 0.55, cx - off, cy + rr * 0.5],
-                 width=thin, cap="round")
-            Line(points=[cx - off - rr * 0.28, cy + rr * 0.1,
-                         cx - off, cy + rr * 0.5,
-                         cx - off + rr * 0.28, cy + rr * 0.1],
-                 width=thin, cap="round", joint="round")
-            Line(points=[cx + off, cy + rr * 0.55, cx + off, cy - rr * 0.5],
-                 width=thin, cap="round")
-            Line(points=[cx + off - rr * 0.28, cy - rr * 0.1,
-                         cx + off, cy - rr * 0.5,
-                         cx + off + rr * 0.28, cy - rr * 0.1],
-                 width=thin, cap="round", joint="round")
-        elif icon == "list":
-            # bulleted rows read more like a proper list glyph than bare
-            # lines, and echo the app's own row-avatar dots
-            dot_r = lw * 0.55
-            for dy in (0.62, 0.0, -0.62):
-                Ellipse(pos=(cx - r * 0.85 - dot_r, cy + dy * r - dot_r),
-                        size=(dot_r * 2, dot_r * 2))
-                Line(points=[cx - r * 0.5, cy + dy * r,
-                             cx + r * 0.85, cy + dy * r],
-                     width=lw, cap="round")
-        elif icon == "chart":
-            base = cy - r * 0.8
-            for dx, hh in ((-r * 0.5, r * 0.9), (0, r * 1.55),
-                          (r * 0.5, r * 1.2)):
-                Line(points=[cx + dx, base, cx + dx, base + hh],
-                     width=lw * 1.5, cap="round")
-            # baseline ties the bars together into one glyph instead of
-            # three floating strokes
-            Line(points=[cx - r * 0.9, base, cx + r * 0.9, base],
-                 width=lw * 0.7, cap="round")
-        elif icon == "down":
-            Line(points=[cx - r * 0.75, cy + r * 0.3,
-                         cx, cy - r * 0.3,
-                         cx + r * 0.75, cy + r * 0.3],
-                 width=lw, cap="round", joint="round")
+    elif icon == "chart":
+        base = cy - r * 0.8
+        for dx, hh in ((-r * 0.5, r * 0.9), (0, r * 1.55),
+                      (r * 0.5, r * 1.2)):
+            Line(points=[cx + dx, base, cx + dx, base + hh],
+                 width=lw * 1.5, cap="round")
+        # baseline ties the bars together into one glyph instead of
+        # three floating strokes
+        Line(points=[cx - r * 0.9, base, cx + r * 0.9, base],
+             width=lw * 0.7, cap="round")
+    elif icon == "down":
+        Line(points=[cx - r * 0.75, cy + r * 0.3,
+                     cx, cy - r * 0.3,
+                     cx + r * 0.75, cy + r * 0.3],
+             width=lw, cap="round", joint="round")
 
 
 NAV_ICONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -352,43 +351,10 @@ def _draw_service_glyph(brand, cx, cy, r, lw):
              width=lw * 0.8, cap="round")
 
 
-class Avatar(Widget):
-    """Circle with the service's first letter, tinted by its category.
-    Superseded by ServiceIcon (which does the same fallback plus real
-    brand logos) but kept around — nothing currently instantiates it, and
-    it's small enough that there's no upside to deleting it during a pure
-    reorganisation."""
-
-    def __init__(self, letter, color, **kwargs):
-        kwargs.setdefault("size_hint", (None, None))
-        kwargs.setdefault("size", (dp(34), dp(34)))
-        super().__init__(**kwargs)
-        with self.canvas:
-            self._color_instr = Color(*color)
-            self._circle = Ellipse()
-        self._label = Label(text=(letter[:1] or "?").upper(), bold=True,
-                            font_size=sp(15), color=WHITE)
-        self.add_widget(self._label)
-        self.bind(pos=self._sync, size=self._sync)
-        self._sync()
-
-    def set_letter(self, letter):
-        self._label.text = (letter[:1] or "?").upper()
-
-    def set_color(self, color):
-        self._color_instr.rgba = color
-
-    def _sync(self, *_):
-        self._circle.pos = self.pos
-        self._circle.size = self.size
-        self._label.pos = self.pos
-        self._label.size = self.size
-
-
 class ServiceIcon(Widget):
     """Circle avatar for a subscription: known brands get a small vector
     glyph on their real colour; everything else falls back to a
-    category-tinted initial, same as the old Avatar widget."""
+    category-tinted initial."""
 
     def __init__(self, name, fallback_color, shape="circle", **kwargs):
         kwargs.setdefault("size_hint", (None, None))

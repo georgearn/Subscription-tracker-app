@@ -173,15 +173,6 @@ def update_subscription(sub_id, name, amount, sec_amount, sec_currency,
         )
 
 
-def get_distinct_cards():
-    with get_conn() as conn:
-        rows = conn.execute(
-            "SELECT DISTINCT card FROM subscriptions "
-            "WHERE card IS NOT NULL AND card != '' ORDER BY card"
-        ).fetchall()
-        return [r["card"] for r in rows]
-
-
 def get_card_alias(card):
     with get_conn() as conn:
         row = conn.execute(
@@ -205,15 +196,6 @@ def delete_all_subscriptions():
 
 
 # ---- Analytics --------------------------------------------------------
-def get_card_totals():
-    """[(card_label, annual_cost_total), ...] sorted by total desc."""
-    totals = {}
-    for s in get_all_subscriptions():
-        label = s["card"] or "No card"
-        totals[label] = totals.get(label, 0) + annual_cost(s)
-    return sorted(totals.items(), key=lambda kv: -kv[1])
-
-
 def get_card_groups():
     """[(card_label, [subscription rows]), ...], each group's rows sorted
     by name, groups sorted by group annual total desc."""
@@ -263,12 +245,6 @@ def export_to_json_string():
     return json.dumps(export_data(), indent=2, ensure_ascii=False)
 
 
-def export_to_file(path):
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(export_to_json_string())
-    return path
-
-
 def import_data(data, replace=False):
     """Load subscriptions (and primary currency) from a parsed export dict.
     replace=True wipes existing subscriptions first (a clean restore);
@@ -289,12 +265,6 @@ def import_data(data, replace=False):
 
 def import_from_json_string(text, replace=False):
     import_data(json.loads(text), replace=replace)
-
-
-def import_from_file(path, replace=False):
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    import_data(data, replace=replace)
 
 
 # --------------------------------------------------------------------------
@@ -356,5 +326,3 @@ def payments_per_year(sub):
 def annual_cost(sub):
     return round(sub["price_usd"] * payments_per_year(sub), 2)
 
-
-annual_cost_usd = annual_cost
